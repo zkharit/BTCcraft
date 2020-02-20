@@ -1,0 +1,75 @@
+name: BTCcraft
+version: 0.1.0
+author: zkharit
+main: me.zkharit.BTCcraft.BTCcraft
+api-version: 1.15
+website: github.com/zvk2/BTCcraft
+commands:
+  wallet:
+    description: "display wallet balance and address"
+    permission: btc.wallet
+    usage: "/wallet"
+  sendaddress:
+    description: "send btc to a specififed address"
+    permission: btc.sendaddress
+    usage: "/sendaddress <address> <amt>"
+  sendplayer:
+    description: "send btc to a specified player"
+    permission: btc.sendplayer
+    usage: "/sendplayer <playername> <amt>"
+  settxfee:
+    description: "set your transaction fee in satoshis/byte, defaualt is 10 satoshis/byte"
+    permission: btc.settxfee
+    usage: "/settxfee <1.0-30.0>"
+  adminsend:
+    description: "send btc from the server account to specified address"
+    permission: btc.admin
+    usage: "/adminsend <address> <amt>"
+  setadmintxfee:
+    description: "set the admin fee for transactions in satoshis/byte"
+    permission: btc.admin
+    usage: "/setadmintxfee <1.0-30.0>"
+  adminsetaddress:
+    description: "set the server btc address"
+    permission: btc.admin
+    usage: "/adminsetaddress <address>"
+  setaddress:
+    description: "set a players withdraw address"
+    permission: btc.setaddress
+    usage: "/setaddress <address>"
+  withdraw:
+    description: "withdraw a specified wallet balance to your set wallet address"
+    permission: btc.withdraw
+    usage: "/withdraw <amt>"
+permissions:
+  btc.*:
+    default: op
+    children:
+      btc.wallet: true
+      btc.sendaddress: true
+      btc.sendplayer: true
+      btc.settxfee: true
+      btc.admin: true
+      btc.setaddress: true
+      btc.withdraw: true
+  btc.wallet:
+    description: "allows players to use the /wallet command"
+    default: true
+  btc.sendaddress:
+    description: "allows players to use the /sendaddress command"
+    default: true
+  btc.sendplayer:
+    description: "allows players to use the /sendplayer command"
+    default: true
+  btc.settxfee:
+    description: "allows players to use the /settxfee command"
+    default: true
+  btc.admin:
+    description: "allows players to use the /admin commands, CAUTION: whoever has this permission has control of the admin BTC wallet"
+    default: op
+  btc.setaddress:
+    description: "allows players to use the /setaddress command"
+    default: true
+  btc.withdraw:
+    description: "allows players to use the /withdraw command"
+    default: true
