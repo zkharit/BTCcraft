@@ -37,12 +37,11 @@ public class BTCcraft extends JavaPlugin{
     private FileWriter playerwalletsWriter;
 
     @Override
+    @SuppressWarnings("unchecked")
     public void onEnable(){
         //create config and set default's
         FileConfiguration config = this.getConfig();
 
-        //Admin's BTC address, if left unspecified one will be created
-        config.addDefault("Admin BTC Address", "");
         //Determine if player wallets should be generated on first join event
         config.addDefault("Generate Player Wallets", true);
         //Decide between using a MySQL database or a .json file to store user wallet records (Database is recommended)
@@ -139,8 +138,6 @@ public class BTCcraft extends JavaPlugin{
         this.getCommand("adminsend").setExecutor(new AdminSendCommand());
         this.getCommand("setadmintxfee").setExecutor(new SetAdminTXFeeCommand());
         this.getCommand("adminsetaddress").setExecutor(new AdminSetAddressCommand());
-        //May get rid of adminsetaddress, if user sets to an address they own, could interfere with other derived receive addresses and cause errors
-        //aka admin must use generated BTC address from bitcoinj then if they wish transfer funds to a previously owned address with /adminsend
         this.getCommand("setaddress").setExecutor(new SetAddressCommand());
         this.getCommand("withdraw").setExecutor(new WithdrawCommand());
         this.getCommand("generateAddress").setExecutor(new generateAddressCommand());
