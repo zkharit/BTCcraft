@@ -21,18 +21,18 @@ commands:
     description: "set your transaction fee in satoshis/byte, defaualt is 10 satoshis/byte"
     permission: btc.settxfee
     usage: "/settxfee <1.0-30.0>"
-  adminsend:
-    description: "send btc from the server account to specified address"
+  adminsendplayer:
+    description: "send btc from the server account to specified player"
     permission: btc.admin
-    usage: "/adminsend <address> <amt>"
+    usage: "/adminsendplayer <player> <amt>"
+  adminsendaddress:
+    description: "send btc from the server account to a specified address"
+    permission: btc.admin
+    usage: "/adminsendaddress <address> <amt>"
   setadmintxfee:
     description: "set the admin fee for transactions in satoshis/byte"
     permission: btc.admin
     usage: "/setadmintxfee <1.0-30.0>"
-  adminsetaddress:
-    description: "set the server btc address"
-    permission: btc.admin
-    usage: "/adminsetaddress <address>"
   setaddress:
     description: "set a players withdraw address"
     permission: btc.setaddress
@@ -41,6 +41,14 @@ commands:
     description: "withdraw a specified wallet balance to your set wallet address"
     permission: btc.withdraw
     usage: "/withdraw <amt>"
+  generateaddress:
+    description: "generate an address for a specified player"
+    permission: btc.admin
+    usage: "/generateaddress <player>"
+  getplayeraddress:
+    description: "get the address of a specified player"
+    permission: btc.getplayeraddress
+    usage: "/getplayeraddress <player>"
 permissions:
   btc.*:
     default: op
@@ -72,4 +80,7 @@ permissions:
     default: true
   btc.withdraw:
     description: "allows players to use the /withdraw command"
+    default: true
+  btc.getplayreaddress:
+    description: "allows players to use the /getplayeraddress command"
     default: true
