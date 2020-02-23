@@ -1,7 +1,18 @@
 package me.zkharit.BTCcraft;
 
 import me.zkharit.BTCcraft.events.EntityEvents;
+import me.zkharit.BTCcraft.events.ServerEvents;
+import me.zkharit.BTCcraft.commands.SendAddressCommand;
 import me.zkharit.BTCcraft.commands.WalletCommand;
+import me.zkharit.BTCcraft.commands.SendPlayerCommand;
+import me.zkharit.BTCcraft.commands.SetTXFeeCommand;
+import me.zkharit.BTCcraft.commands.AdminSendPlayerCommand;
+import me.zkharit.BTCcraft.commands.AdminSendAddressCommand;
+import me.zkharit.BTCcraft.commands.SetAdminTXFeeCommand;
+import me.zkharit.BTCcraft.commands.SetAddressCommand;
+import me.zkharit.BTCcraft.commands.WithdrawCommand;
+import me.zkharit.BTCcraft.commands.GenerateAddressCommand;
+import me.zkharit.BTCcraft.commands.GetPlayerAddressCommand;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -9,6 +20,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import org.bukkit.scheduler.BukkitRunnable;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -38,12 +50,43 @@ public class BTCcraft extends JavaPlugin{
 
     private Connection connection;
 
+    private File configFile;
     private File walletsFile;
     private FileWriter playerwalletsWriter;
 
     @Override
     @SuppressWarnings("unchecked")
     public void onEnable(){
+        configFile = new File(getDataFolder(), "config.yml");
+        if(!configFile.exists()){
+
+            BukkitRunnable r = new BukkitRunnable() {
+                @Override
+                public void run() {
+                    Bukkit.getServer().broadcastMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "No config file found, generating one, please reload the plugin");
+
+                }
+            };
+            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "No config file found, generating one, please reload the plugin");
+            r.runTaskAsynchronously(this);
+
+            try{
+                if(configFile.createNewFile()) ;
+                else{
+                    Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Error creating config.yml");
+                    Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Either create the file config.yml in your plugins/BTCcraft folder or experience unintended issues");
+                    //print line number for debugging purposes for server runner
+                    Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Line Number: " + Thread.currentThread().getStackTrace()[1].getLineNumber());
+                }
+            }catch(IOException e){
+                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Error creating config.yml");
+                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Either create the file config.yml in your plugins/BTCcraft folder or experience unintended issues");
+                //print line number for debugging purposes for server runner
+                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Line Number: " + Thread.currentThread().getStackTrace()[1].getLineNumber());
+                e.printStackTrace();
+            }
+            return;
+        }
         //create config and set default's
         FileConfiguration config = this.getConfig();
 
@@ -80,14 +123,14 @@ public class BTCcraft extends JavaPlugin{
 
             try{
                 openConnection();
-            } catch (ClassNotFoundException e){
+            }catch (ClassNotFoundException e){
                 //if db fails then revert to using playerwallets.json for wallet storage
-                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "ERROR: " + ChatColor.RESET + "MySQL database specified might not have the jdbc driver installed, defaulting to .json file usage");
+                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "MySQL database specified might not have the jdbc driver installed, defaulting to .json file usage");
                 useDatabase = false;
                 e.printStackTrace();
-            } catch (SQLException e){
+            }catch (SQLException e){
                 //if db fails then revert to using playerwallets.json for wallet storage
-                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "ERROR: " + ChatColor.RESET + "SQLException");
+                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "SQLException");
                 useDatabase = false;
                 e.printStackTrace();
             }
@@ -97,20 +140,20 @@ public class BTCcraft extends JavaPlugin{
         if(!useDatabase){
             walletsFile = new File(getDataFolder(), "playerwallets.json");
             //create the file if it doesn't already exist
-            if (!walletsFile.exists()) {
-                try {
+            if(!walletsFile.exists()){
+                try{
                     if(walletsFile.createNewFile());
                     else{
-                        Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "ERROR: " + ChatColor.RESET + "Error creating playerwallets.json");
-                        Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "ERROR: " + ChatColor.RESET + "Either create the file playerwallets.json in your plugins/BTCcraft folder or experience unintended issues");
+                        Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Error creating playerwallets.json");
+                        Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Either create the file playerwallets.json in your plugins/BTCcraft folder or experience unintended issues");
                         //print line number for debugging purposes for server runner
-                        Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "ERROR: " + ChatColor.RESET + "Line Number: " + Thread.currentThread().getStackTrace()[1].getLineNumber());
+                        Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Line Number: " + Thread.currentThread().getStackTrace()[1].getLineNumber());
                     }
                 }catch(IOException e){
-                    Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "ERROR: " + ChatColor.RESET + "Error creating playerwallets.json");
-                    Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "ERROR: " + ChatColor.RESET + "Either create the file playerwallets.json in your plugins/BTCcraft folder or experience unintended issues");
+                    Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Error creating playerwallets.json");
+                    Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Either create the file playerwallets.json in your plugins/BTCcraft folder or experience unintended issues");
                     //print line number for debugging purposes for server runner
-                    Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "ERROR: " + ChatColor.RESET + "Line Number: " + Thread.currentThread().getStackTrace()[1].getLineNumber());
+                    Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Line Number: " + Thread.currentThread().getStackTrace()[1].getLineNumber());
                     e.printStackTrace();
                 }
 
@@ -118,7 +161,7 @@ public class BTCcraft extends JavaPlugin{
                 JSONObject adminJSON = new JSONObject();
 
                 BTCcraftWallet adminWallet = generateAdminWallet();
-                adminAddress = adminWallet.getDepositAddress();
+                //adminAddress = adminWallet.getDepositAddress();
 
                 adminJSON.put("UUID", "admin");
                 adminJSON.put("address", /*adminWallet.getDepositAddress()*/"12345");
@@ -130,7 +173,7 @@ public class BTCcraft extends JavaPlugin{
                     playerwalletsWriter.write(walletsArray.toString());
                     playerwalletsWriter.close();
                 }catch(IOException e){
-                    Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "ERROR: " + ChatColor.RESET + "Failed writing to playerwallets.json");
+                    Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Failed writing to playerwallets.json");
                     e.printStackTrace();
                 }
             }
@@ -138,7 +181,6 @@ public class BTCcraft extends JavaPlugin{
 
         //set command executors
         this.getCommand("wallet").setExecutor(new WalletCommand());
-        /*
         this.getCommand("sendaddress").setExecutor(new SendAddressCommand());
         this.getCommand("sendplayer").setExecutor(new SendPlayerCommand());
         this.getCommand("settxfee").setExecutor(new SetTXFeeCommand());
@@ -149,12 +191,10 @@ public class BTCcraft extends JavaPlugin{
         this.getCommand("withdraw").setExecutor(new WithdrawCommand());
         this.getCommand("generateaddress").setExecutor(new GenerateAddressCommand());
         this.getCommand("getplayeraddress").setExecutor(new GetPlayerAddressCommand());
-         */
-
 
         //send plugin instance into entity events, for using config information
         getServer().getPluginManager().registerEvents(new EntityEvents(this), this);
-        getServer().getPluginManager();
+        getServer().getPluginManager().registerEvents(new ServerEvents(this), this);
 
     }
 
@@ -180,12 +220,12 @@ public class BTCcraft extends JavaPlugin{
 
 
     public void openConnection() throws SQLException, ClassNotFoundException {
-        if (connection != null && !connection.isClosed()) {
+        if(connection != null && !connection.isClosed()) {
             return;
         }
 
         synchronized (this) {
-            if (connection != null && !connection.isClosed()) {
+            if(connection != null && !connection.isClosed()) {
                 return;
             }
             Class.forName("com.mysql.jdbc.Driver");
@@ -233,7 +273,7 @@ public class BTCcraft extends JavaPlugin{
         }catch(IOException e){
             e.printStackTrace();
         } catch (ParseException e) {
-            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "ERROR: Parse Error");
+            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: Parse Error");
             e.printStackTrace();
         }
         return false;
