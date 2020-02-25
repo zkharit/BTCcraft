@@ -1,15 +1,17 @@
 package me.zkharit.BTCcraft;
 
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Transaction;
+import org.bukkit.entity.Player;
 
-public class Transaction extends org.bitcoinj.core.Transaction {
+public class BTCcraftTransaction extends Transaction {
     String sendaddress;
     String receiveaddress;
     Double amount;
     Double fee;
     String transactionid;
 
-    public Transaction(NetworkParameters params) {
+    public BTCcraftTransaction(NetworkParameters params, Player player) {
         super(params);
     }
 
