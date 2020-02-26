@@ -2,25 +2,31 @@ package me.zkharit.BTCcraft;
 
 import me.zkharit.BTCcraft.events.EntityEvents;
 import me.zkharit.BTCcraft.events.ServerEvents;
-import me.zkharit.BTCcraft.commands.SendAddressCommand;
-import me.zkharit.BTCcraft.commands.WalletCommand;
-import me.zkharit.BTCcraft.commands.SendPlayerCommand;
-import me.zkharit.BTCcraft.commands.SetTXFeeCommand;
-import me.zkharit.BTCcraft.commands.AdminSendPlayerCommand;
 import me.zkharit.BTCcraft.commands.AdminSendAddressCommand;
-import me.zkharit.BTCcraft.commands.SetAdminTXFeeCommand;
-import me.zkharit.BTCcraft.commands.SetAddressCommand;
-import me.zkharit.BTCcraft.commands.WithdrawCommand;
+import me.zkharit.BTCcraft.commands.AdminSendPlayerCommand;
 import me.zkharit.BTCcraft.commands.GenerateAddressCommand;
 import me.zkharit.BTCcraft.commands.GetPlayerAddressCommand;
+import me.zkharit.BTCcraft.commands.SendAddressCommand;
+import me.zkharit.BTCcraft.commands.SendPlayerCommand;
+import me.zkharit.BTCcraft.commands.SetAdminTXFeeCommand;
+import me.zkharit.BTCcraft.commands.SetTXFeeCommand;
+import me.zkharit.BTCcraft.commands.SetAddressCommand;
+import me.zkharit.BTCcraft.commands.WalletCommand;
+import me.zkharit.BTCcraft.commands.WithdrawCommand;
 
+import org.bitcoinj.core.*;
+import org.bitcoinj.kits.WalletAppKit;
+import org.bitcoinj.params.TestNet3Params;
+
+import org.bitcoinj.wallet.Wallet;
+import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-
 import org.bukkit.scheduler.BukkitRunnable;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -34,8 +40,13 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class BTCcraft extends JavaPlugin{
+    private HashMap<Player, UUID> playerCache = new HashMap<Player, UUID>();
+    private HashMap<Player, BTCcraftWallet> walletCache = new HashMap<Player, BTCcraftWallet>();
 
     private boolean genPlayerWallets;
     private boolean useDatabase;
@@ -53,6 +64,12 @@ public class BTCcraft extends JavaPlugin{
     private File configFile;
     private File walletsFile;
     private FileWriter playerwalletsWriter;
+
+    private NetworkParameters params = new TestNet3Params();
+    File walletsDirectory = new File(getDataFolder().toString());
+    String filePrefix = "wallet-test";
+    private BTCcraft btCcraft = this;
+    private WalletAppKit kit;
 
     @Override
     @SuppressWarnings("unchecked")
@@ -165,6 +182,7 @@ public class BTCcraft extends JavaPlugin{
 
                 adminJSON.put("UUID", "admin");
                 adminJSON.put("address", /*adminWallet.getDepositAddress()*/"12345");
+                adminJSON.put("fee", "10");
 
                 walletsArray.add(adminJSON);
 
@@ -179,18 +197,20 @@ public class BTCcraft extends JavaPlugin{
             }
         }
 
+        generatePlayerWallet();
+
         //set command executors
-        this.getCommand("wallet").setExecutor(new WalletCommand());
-        this.getCommand("sendaddress").setExecutor(new SendAddressCommand());
+        this.getCommand("wallet").setExecutor(new WalletCommand(kit));
+        this.getCommand("sendaddress").setExecutor(new SendAddressCommand(kit, btCcraft));
         this.getCommand("sendplayer").setExecutor(new SendPlayerCommand());
         this.getCommand("settxfee").setExecutor(new SetTXFeeCommand());
         this.getCommand("adminsendplayer").setExecutor(new AdminSendPlayerCommand());
-        this.getCommand("adminsendaddress").setExecutor(new AdminSendAddressCommand());
+        this.getCommand("adminsendaddress").setExecutor(new AdminSendAddressCommand(kit));
         this.getCommand("setadmintxfee").setExecutor(new SetAdminTXFeeCommand());
         this.getCommand("setaddress").setExecutor(new SetAddressCommand());
         this.getCommand("withdraw").setExecutor(new WithdrawCommand());
         this.getCommand("generateaddress").setExecutor(new GenerateAddressCommand());
-        this.getCommand("getplayeraddress").setExecutor(new GetPlayerAddressCommand());
+        this.getCommand("getplayeraddress").setExecutor(new GetPlayerAddressCommand(kit));
 
         //send plugin instance into entity events, for using config information
         getServer().getPluginManager().registerEvents(new EntityEvents(this), this);
@@ -203,18 +223,66 @@ public class BTCcraft extends JavaPlugin{
 
     }
 
-    public BTCcraftWallet generatePlayerWallet(Player player){
-
-        if(isUseDatabase()){
-
-        }else{
-
-        }
-
+    public BTCcraftWallet generateAdminWallet(){
         return null;
     }
 
-    public BTCcraftWallet generateAdminWallet(){
+    public BTCcraftWallet generatePlayerWallet(/*Player player*/){
+        Address a;
+        kit = new WalletAppKit(params, new File(getDataFolder().toString() + "/wallets"), filePrefix){
+            @Override
+            protected void onSetupCompleted() {
+                // This is called in a background thread after startAndWait is called, as setting up various objects
+                // can do disk and network IO that may cause UI jank/stuttering in wallet apps if it were to be done
+                // on the main thread.
+                if (wallet().getKeyChainGroupSize() < 1)
+                    wallet().importKey(new ECKey());
+                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "WalletAppKit finished initializing");
+            }
+        };
+
+        kit.startAsync();
+        kit.awaitRunning();
+
+        a = kit.wallet().currentReceiveAddress();
+
+        Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Wallet: " + a.toString());
+
+        kit.wallet().addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
+            @Override
+            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin coin, Coin coin1) {
+                BukkitRunnable r = new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        Bukkit.getServer().broadcastMessage(ChatColor.RED + "BTCCRAFT ERROR: Received 0 Confirmations");
+
+                    }
+                };
+                r.runTaskAsynchronously(btCcraft);
+                while(tx.getConfidence().getDepthInBlocks() < 1){
+                    BukkitRunnable k = new BukkitRunnable() {
+                        @Override
+                        public void run() {
+                            Bukkit.getServer().broadcastMessage(ChatColor.RED + "BTCCRAFT ERROR: Waiting for confirmations");
+
+                        }
+                    };
+                    k.runTaskAsynchronously(btCcraft);
+                    try {
+                        TimeUnit.MINUTES.sleep(1);
+                    } catch (InterruptedException e) {
+                        Bukkit.getServer().getConsoleSender().sendMessage("Something exception");
+                        e.printStackTrace();
+                    }
+                }
+                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: Received coins??? block depth of: " + tx.getConfidence().getDepthInBlocks());
+                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: Coin: " + coin.value);
+                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: Coin1: " + coin1.value);
+            }
+        });
+
+
+
         return null;
     }
 
@@ -245,25 +313,18 @@ public class BTCcraft extends JavaPlugin{
         return adminAddress;
     }
 
-    public Connection getConnection() {
-        return connection;
-    }
-
-    public FileWriter getPlayerwalletsWriter() {
-        return playerwalletsWriter;
-    }
-
     @SuppressWarnings("unchecked")
-    public boolean appendToWallets(String UUID){
+    public boolean appendToWallets(String uuid, String address){
         try{
             JSONParser parser = new JSONParser();
             JSONArray wallets = (JSONArray) parser.parse(new FileReader(walletsFile.getPath()));
 
             JSONObject testObject = new JSONObject();
 
-            testObject.put("UUID","67890");
-            testObject.put("deposit","67890");
+            testObject.put("UUID",uuid);
+            testObject.put("deposit", address);
             testObject.put("set","");
+            testObject.put("fee", "10");
 
             wallets.add(testObject);
 
@@ -271,11 +332,36 @@ public class BTCcraft extends JavaPlugin{
             playerwalletsWriter.append(wallets.toString());
             playerwalletsWriter.close();
         }catch(IOException e){
+            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: Error appending to playerwallets.json");
             e.printStackTrace();
         } catch (ParseException e) {
-            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: Parse Error");
+            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: Error parsing from playerwallets.json");
             e.printStackTrace();
         }
         return false;
+    }
+
+    public UUID getUUIDFromCache(Player player){
+        return playerCache.get(player);
+    }
+
+    public void addToPlayerCache(Player player, UUID uuid){
+        playerCache.put(player, uuid);
+    }
+
+    public void removeFromPlayerCache(Player player){
+        playerCache.remove(player);
+    }
+
+    public BTCcraftWallet getBTCcrafWalletFromCache(Player player){
+        return walletCache.get(player);
+    }
+
+    public void addToWalletCache(Player player, BTCcraftWallet btCcraftWallet){
+        walletCache.put(player, btCcraftWallet);
+    }
+
+    public void removeFromWalletCache(Player player){
+        walletCache.remove(player);
     }
 }
