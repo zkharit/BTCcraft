@@ -4,17 +4,21 @@ import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.wallet.*;
 
+import org.bukkit.entity.Player;
+
 public class BTCcraftWallet extends Wallet{
     private String depositaddress;
     private String setaddress;
-    private Double fee = 10.0;
+    private long fee = 10;
     private Coin balance;
 
-    public BTCcraftWallet(NetworkParameters params, KeyChainGroup keyChainGroup) {
+    public BTCcraftWallet(NetworkParameters params, KeyChainGroup keyChainGroup, Player player) {
         super(params, keyChainGroup);
+
+        String uuid = player.getUniqueId().toString();
     }
 
-    public String getDespoitAddress() {
+    public String getDepositAddress() {
         return depositaddress;
     }
 
@@ -22,7 +26,7 @@ public class BTCcraftWallet extends Wallet{
         return setaddress;
     }
 
-    public Double getFee() {
+    public long getFee() {
         return fee;
     }
 
@@ -38,7 +42,7 @@ public class BTCcraftWallet extends Wallet{
         this.setaddress = setaddress;
     }
 
-    public void setFee(Double fee) {
+    public void setFee(long fee) {
         this.fee = fee;
     }
 
@@ -47,7 +51,7 @@ public class BTCcraftWallet extends Wallet{
     }
 
     /*public BTCcraftWallet(Player player) {
+        super();
         UUID uuid = player.getUniqueId();
-
     }*/
 }
