@@ -32,7 +32,7 @@ commands:
   setadmintxfee:
     description: "set the admin fee for transactions in satoshis/byte"
     permission: btc.admin
-    usage: "/setadmintxfee <1.0-30.0>"
+    usage: "/setadmintxfee <0-50>"
   setaddress:
     description: "set a players withdraw address"
     permission: btc.setaddress
