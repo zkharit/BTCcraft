@@ -37,6 +37,7 @@
                                     <include>org.bouncycastle:*</include>
                                     <include>com.google.guava:*</include>
                                     <include>com.squareup.okhttp3:*</include>
+                                    <include>com.google.protobuf:*</include>
                                 </includes>
                             </artifactSet>
                             <filters>
@@ -108,6 +109,12 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.7.28</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>3.11.4</version>
         </dependency>
     </dependencies>
     <properties>
