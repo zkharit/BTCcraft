@@ -23,7 +23,7 @@ public class WalletCommand implements CommandExecutor {
         if(strings.length != 0){
             return false;
         }
-        
+
         if(commandSender instanceof Player){
             Player player = (Player) commandSender;
 
