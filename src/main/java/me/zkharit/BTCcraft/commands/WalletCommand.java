@@ -11,10 +11,10 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class WalletCommand implements CommandExecutor {
-    private WalletAppKit kit;
+    private BTCcraft btccraft;
 
-    public WalletCommand(WalletAppKit k){
-        kit = k;
+    public WalletCommand(BTCcraft b){
+        btccraft = b;
     }
 
     @Override
@@ -22,9 +22,12 @@ public class WalletCommand implements CommandExecutor {
         if(commandSender instanceof Player){
             Player player = (Player) commandSender;
 
-            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "INFO: "+ ChatColor.AQUA + player.getName() + ChatColor.RESET + " has used /wallet");
-            Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.AQUA + "Address: " + ChatColor.YELLOW + kit.wallet().currentReceiveAddress().toString());
-            Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.AQUA + "Balance: " + ChatColor.YELLOW + kit.wallet().getBalance().toFriendlyString());
+            BTCcraftWallet wallet = btccraft.getBTCcrafWalletFromCache(player);
+
+            //Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "INFO: "+ ChatColor.AQUA + player.getName() + ChatColor.RESET + " has used /wallet");
+            player.sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.AQUA + "Address: " + ChatColor.YELLOW + wallet.getDepositaddress());
+            player.sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.AQUA + "Balance: " + ChatColor.YELLOW + wallet.getBalance());
+            player.sendMessage(ChatColor.YELLOW + "View your wallet here: " + ChatColor.AQUA + ChatColor.UNDERLINE + "https://www.blockchain.com/btc/address/" + wallet.getDepositaddress());
         }
 
         return true;
