@@ -5,6 +5,7 @@ import me.zkharit.BTCcraft.BTCcraft;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.core.Transaction;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.wallet.SendRequest;
 import org.bitcoinj.wallet.Wallet;
@@ -65,6 +66,8 @@ public class SendAddressCommand implements CommandExecutor {
 
             //create a req for the value and the send to person, and se the fee to be used
             SendRequest req = SendRequest.to(send, value);
+            req.feePerKb = Transaction.REFERENCE_DEFAULT_MIN_TX_FEE;
+            //req.feePerKb = Coin.valueOf(10L);
             //comment out fee right now for nullpointer issues (havent implemented walletcache and storing wallets)
             //req.feePerKb = Coin.valueOf(btcraft.getBTCcrafWalletFromCache(player).getFee());
 
@@ -79,7 +82,7 @@ public class SendAddressCommand implements CommandExecutor {
 
             //If broadcasting tx is successful then send the tx id and give them a link to the tx on blockchain.com
             player.sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Transaction id: " + ChatColor.AQUA + result.tx.getTxId());
-            player.sendMessage(ChatColor.YELLOW + "View your transaction here: " + ChatColor.AQUA + "https://www.blockchain.com/btc/tx/" + result.tx.getTxId());
+            player.sendMessage(ChatColor.YELLOW + "View your transaction here: " + ChatColor.AQUA + ChatColor.UNDERLINE + "https://www.blockchain.com/btc/tx/" + result.tx.getTxId());
             return true;
         }
 
