@@ -27,6 +27,13 @@ public class EntityEvents implements Listener {
         btccraft.addToPlayerCache(player, player.getUniqueId());
     }
 
+    @EventHandler
+    public void onPlayerLeave(PlayerQuitEvent event){
+        Player player = event.getPlayer();
+        btccraft.removeFromPlayerCache(player);
+        btccraft.removeFromWalletCache(player);
+    }
+
     private void generatePlayerWallet(BTCcraft b, Player player){
         if(b.isGenPlayerWallets()) {
             //BTCcraftWallet wallet = b.generatePlayerWallet(player);
@@ -35,13 +42,4 @@ public class EntityEvents implements Listener {
             Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: "+ ChatColor.RESET + "skipping player address creation disabled in config");
         }
     }
-
-    @EventHandler
-    public void onPlayerLeave(PlayerQuitEvent event){
-        Player player = event.getPlayer();
-        btccraft.removeFromPlayerCache(player);
-        btccraft.removeFromWalletCache(player);
-    }
-
-
 }
