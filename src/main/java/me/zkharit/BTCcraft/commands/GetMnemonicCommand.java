@@ -24,7 +24,7 @@ public class GetMnemonicCommand implements CommandExecutor {
 
         if(commandSender instanceof Player){
             Player p = (Player) commandSender;
-            p.sendMessage(ChatColor.AQUA + p.getName() + " your mnemonic to restore your BTC wallet is: " + ChatColor.YELLOW + btccraft.getBTCcrafWalletFromCache(p).getMnemonic());
+            p.sendMessage(ChatColor.YELLOW + "" + ChatColor.BOLD + p.getName() + ChatColor.AQUA + " your mnemonic to restore your BTC wallet is: " + ChatColor.YELLOW + btccraft.getBTCcrafWalletFromCache(p).getMnemonic());
         }
 
         return true;

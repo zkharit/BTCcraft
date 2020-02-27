@@ -36,7 +36,7 @@ import java.util.HashMap;
 import java.util.UUID;
 
 public class BTCcraft extends JavaPlugin{
-    private HashMap<Player, UUID> playerCache = new HashMap<Player, UUID>();
+    public HashMap<Player, UUID> playerCache = new HashMap<Player, UUID>();
     public HashMap<Player, BTCcraftWallet> walletCache = new HashMap<Player, BTCcraftWallet>();
 
     private boolean genPlayerWallets;
@@ -224,7 +224,7 @@ public class BTCcraft extends JavaPlugin{
         this.getCommand("setadmintxfee").setExecutor(new SetAdminTXFeeCommand());
         this.getCommand("setaddress").setExecutor(new SetAddressCommand());
         this.getCommand("withdraw").setExecutor(new WithdrawCommand());
-        this.getCommand("generateaddress").setExecutor(new GenerateAddressCommand());
+        this.getCommand("generateaddress").setExecutor(new GenerateAddressCommand(this));
         this.getCommand("getplayeraddress").setExecutor(new GetPlayerAddressCommand(this));
         this.getCommand("getmnemonic").setExecutor(new GetMnemonicCommand(this));
 

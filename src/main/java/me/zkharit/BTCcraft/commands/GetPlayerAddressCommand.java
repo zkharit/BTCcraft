@@ -43,12 +43,12 @@ public class GetPlayerAddressCommand implements CommandExecutor {
 
                 if (temp.getName().toLowerCase().equals(strings[0].toLowerCase())) {
                     BTCcraftWallet b = (BTCcraftWallet) entry.getValue();
-                    player.sendMessage(ChatColor.AQUA + strings[0] + "'s address: " + ChatColor.YELLOW + b.getDepositaddress());
+                    player.sendMessage(ChatColor.YELLOW + "" + ChatColor.BOLD + strings[0] + "'s" + ChatColor.AQUA + "address: " + ChatColor.YELLOW + b.getDepositaddress());
                     return true;
                 }
             }
 
-            player.sendMessage(ChatColor.AQUA + strings[0] + "'s " + ChatColor.YELLOW + "address cannot be found, they must be online");
+            player.sendMessage(ChatColor.YELLOW + "" + ChatColor.BOLD + strings[0] + "'s " + ChatColor.AQUA + "address cannot be found, they must be online");
         }
         return true;
     }
