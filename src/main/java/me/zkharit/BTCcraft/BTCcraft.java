@@ -17,9 +17,9 @@ import me.zkharit.BTCcraft.commands.WithdrawCommand;
 import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.TestNet3Params;
-
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -51,25 +52,26 @@ public class BTCcraft extends JavaPlugin{
     private boolean genPlayerWallets;
     private boolean useDatabase;
 
-    private String adminAddress;
+    private Address adminAddress;
 
+    private Connection connection;
     private String username;
     private String password;
     private String host;
     private int port;
     private String dbname;
 
-    private Connection connection;
-
     private File configFile;
     private File walletsFile;
     private FileWriter playerwalletsWriter;
 
+    private File walletsDirectory = new File(getDataFolder().toString() + "/wallets");
+
     private NetworkParameters params = new TestNet3Params();
-    File walletsDirectory = new File(getDataFolder().toString());
-    String filePrefix = "wallet-test";
-    private BTCcraft btCcraft = this;
+    private String filePrefix = "wallet";
     private WalletAppKit kit;
+
+    private BTCcraft btCcraft = this;
 
     @Override
     @SuppressWarnings("unchecked")
@@ -81,7 +83,6 @@ public class BTCcraft extends JavaPlugin{
                 @Override
                 public void run() {
                     Bukkit.getServer().broadcastMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "No config file found, generating one, please reload the plugin");
-
                 }
             };
             Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "No config file found, generating one, please reload the plugin");
@@ -131,6 +132,8 @@ public class BTCcraft extends JavaPlugin{
         //use db or not
         useDatabase = config.getBoolean("Use Database");
 
+        startBTCservice();
+
         if(useDatabase){
             username = config.getString("username");
             password = config.getString("password");
@@ -151,6 +154,8 @@ public class BTCcraft extends JavaPlugin{
                 useDatabase = false;
                 e.printStackTrace();
             }
+            useDatabase = false;
+            //Auto-set as false for now, database storage is not implemented
         }
 
         //if opening db failed, or plugin set to use .json file
@@ -174,15 +179,22 @@ public class BTCcraft extends JavaPlugin{
                     e.printStackTrace();
                 }
 
+                BTCcraftWallet adminWallet = generateAdminWallet();
+
+                adminAddress = adminWallet.getDepositaddress();
+                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Wallet: " + adminAddress);
+
+                //add admin wallet to cache, use null for admin
+                addToWalletCache(null, adminWallet);
+
                 JSONArray walletsArray = new JSONArray();
                 JSONObject adminJSON = new JSONObject();
 
-                BTCcraftWallet adminWallet = generateAdminWallet();
-                //adminAddress = adminWallet.getDepositAddress();
-
                 adminJSON.put("UUID", "admin");
-                adminJSON.put("address", /*adminWallet.getDepositAddress()*/"12345");
+                adminJSON.put("address", adminAddress);
                 adminJSON.put("fee", "10");
+                adminJSON.put("mnemonic", adminWallet.getMnemonic());
+                adminJSON.put("creation time", adminWallet.getCreationTime());
 
                 walletsArray.add(adminJSON);
 
@@ -194,14 +206,15 @@ public class BTCcraft extends JavaPlugin{
                     Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Failed writing to playerwallets.json");
                     e.printStackTrace();
                 }
+            }else{
+                //restore admin wallet from .json/db file
+                //create new constructor in BTCcraftWallet, one that includes deposit address, 
             }
         }
 
-        generatePlayerWallet();
-
         //set command executors
-        this.getCommand("wallet").setExecutor(new WalletCommand(kit));
-        this.getCommand("sendaddress").setExecutor(new SendAddressCommand(kit, btCcraft));
+        this.getCommand("wallet").setExecutor(new WalletCommand(this));
+        this.getCommand("sendaddress").setExecutor(new SendAddressCommand(kit, this));
         this.getCommand("sendplayer").setExecutor(new SendPlayerCommand());
         this.getCommand("settxfee").setExecutor(new SetTXFeeCommand());
         this.getCommand("adminsendplayer").setExecutor(new AdminSendPlayerCommand());
@@ -220,14 +233,33 @@ public class BTCcraft extends JavaPlugin{
 
     @Override
     public void onDisable(){
+        //write cache to .json file or db
+        //kit.stopAsync();
+    }
 
+    private void startBTCservice(){
+        kit = new WalletAppKit(params, walletsDirectory, filePrefix) {
+            @Override
+            protected void onSetupCompleted() {
+                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "WalletAppKit finished initializing");
+                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Finishing Setup...");
+            }
+        };
+
+        kit.startAsync();
+        kit.awaitRunning();
     }
 
     public BTCcraftWallet generateAdminWallet(){
-        return null;
+        Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Generating Admin wallet address...");
+        BTCcraftWallet adminWallet = new BTCcraftWallet(params, null, kit);
+
+        kit.chain().addWallet(adminWallet.getWallet());
+
+        return adminWallet;
     }
 
-    public BTCcraftWallet generatePlayerWallet(/*Player player*/){
+    public BTCcraftWallet generatePlayerWallet(Player player){
         Address a;
         kit = new WalletAppKit(params, new File(getDataFolder().toString() + "/wallets"), filePrefix){
             @Override
@@ -280,12 +312,8 @@ public class BTCcraft extends JavaPlugin{
                 Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: Coin1: " + coin1.value);
             }
         });
-
-
-
         return null;
     }
-
 
     public void openConnection() throws SQLException, ClassNotFoundException {
         if(connection != null && !connection.isClosed()) {
@@ -309,7 +337,7 @@ public class BTCcraft extends JavaPlugin{
         return useDatabase;
     }
 
-    public String getAdminAddress() {
+    public Address getAdminAddress() {
         return adminAddress;
     }
 
@@ -325,6 +353,7 @@ public class BTCcraft extends JavaPlugin{
             testObject.put("deposit", address);
             testObject.put("set","");
             testObject.put("fee", "10");
+            testObject.put("mnemonic", "");
 
             wallets.add(testObject);
 
