@@ -27,9 +27,12 @@ public class WalletCommand implements CommandExecutor {
 
             BTCcraftWallet wallet = btccraft.getBTCcrafWalletFromCache(player);
             Address a = wallet.getDepositaddress();
+            Address b = wallet.getSetaddress();
 
-            //Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "INFO: "+ ChatColor.AQUA + player.getName() + ChatColor.RESET + " has used /wallet");
             player.sendMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "Address: " + ChatColor.YELLOW + a);
+            if(a != b){
+                player.sendMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "Set Address: " + ChatColor.YELLOW + b);
+            }
             player.sendMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "Balance: " + ChatColor.YELLOW + wallet.getBalance());
             player.sendMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "View your wallet here: " + ChatColor.YELLOW + ChatColor.UNDERLINE + "https://www.blockchain.com/btc/address/" + a);
         }

@@ -222,7 +222,7 @@ public class BTCcraft extends JavaPlugin{
         this.getCommand("adminsendplayer").setExecutor(new AdminSendPlayerCommand());
         this.getCommand("adminsendaddress").setExecutor(new AdminSendAddressCommand(kit));
         this.getCommand("setadmintxfee").setExecutor(new SetAdminTXFeeCommand());
-        this.getCommand("setaddress").setExecutor(new SetAddressCommand());
+        this.getCommand("setaddress").setExecutor(new SetAddressCommand(this));
         this.getCommand("withdraw").setExecutor(new WithdrawCommand());
         this.getCommand("generateaddress").setExecutor(new GenerateAddressCommand(this));
         this.getCommand("getplayeraddress").setExecutor(new GetPlayerAddressCommand(this));
