@@ -1,18 +1,8 @@
 package me.zkharit.BTCcraft;
 
+import me.zkharit.BTCcraft.commands.*;
 import me.zkharit.BTCcraft.events.EntityEvents;
 import me.zkharit.BTCcraft.events.ServerEvents;
-import me.zkharit.BTCcraft.commands.AdminSendAddressCommand;
-import me.zkharit.BTCcraft.commands.AdminSendPlayerCommand;
-import me.zkharit.BTCcraft.commands.GenerateAddressCommand;
-import me.zkharit.BTCcraft.commands.GetPlayerAddressCommand;
-import me.zkharit.BTCcraft.commands.SendAddressCommand;
-import me.zkharit.BTCcraft.commands.SendPlayerCommand;
-import me.zkharit.BTCcraft.commands.SetAdminTXFeeCommand;
-import me.zkharit.BTCcraft.commands.SetTXFeeCommand;
-import me.zkharit.BTCcraft.commands.SetAddressCommand;
-import me.zkharit.BTCcraft.commands.WalletCommand;
-import me.zkharit.BTCcraft.commands.WithdrawCommand;
 
 import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;
@@ -44,11 +34,10 @@ import java.sql.SQLException;
 
 import java.util.HashMap;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 public class BTCcraft extends JavaPlugin{
     private HashMap<Player, UUID> playerCache = new HashMap<Player, UUID>();
-    private HashMap<Player, BTCcraftWallet> walletCache = new HashMap<Player, BTCcraftWallet>();
+    public HashMap<Player, BTCcraftWallet> walletCache = new HashMap<Player, BTCcraftWallet>();
 
     private boolean genPlayerWallets;
     private boolean useDatabase;
@@ -236,7 +225,8 @@ public class BTCcraft extends JavaPlugin{
         this.getCommand("setaddress").setExecutor(new SetAddressCommand());
         this.getCommand("withdraw").setExecutor(new WithdrawCommand());
         this.getCommand("generateaddress").setExecutor(new GenerateAddressCommand());
-        this.getCommand("getplayeraddress").setExecutor(new GetPlayerAddressCommand(kit));
+        this.getCommand("getplayeraddress").setExecutor(new GetPlayerAddressCommand(this));
+        this.getCommand("getmnemonic").setExecutor(new GetMnemonicCommand(this));
 
         //send plugin instance into entity events, for using config information
         getServer().getPluginManager().registerEvents(new EntityEvents(this), this);
@@ -361,10 +351,6 @@ public class BTCcraft extends JavaPlugin{
 
     public boolean isGenPlayerWallets() {
         return genPlayerWallets;
-    }
-
-    public boolean isUseDatabase() {
-        return useDatabase;
     }
 
     public Address getAdminAddress() {

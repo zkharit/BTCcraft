@@ -49,6 +49,10 @@ commands:
     description: "get the address of a specified player"
     permission: btc.getplayeraddress
     usage: "/getplayeraddress <player>"
+  getmnemonic:
+    description: "get the restore mnemonic for your wallet"
+    permission: btc.getmnemonic
+    usage: "/getmnemonic"
 permissions:
   btc.*:
     default: op
@@ -60,6 +64,8 @@ permissions:
       btc.admin: true
       btc.setaddress: true
       btc.withdraw: true
+      btc.getplayeraddress: true
+      btc.getmnemonic: true
   btc.wallet:
     description: "allows players to use the /wallet command"
     default: true
@@ -83,4 +89,7 @@ permissions:
     default: true
   btc.getplayreaddress:
     description: "allows players to use the /getplayeraddress command"
+    default: true
+  btc.getmnemonic:
+    description: "allows players to use the /getmnemonic command"
     default: true
