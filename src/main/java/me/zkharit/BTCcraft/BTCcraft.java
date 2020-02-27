@@ -17,6 +17,7 @@ import me.zkharit.BTCcraft.commands.WithdrawCommand;
 import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 
@@ -79,22 +80,30 @@ public class BTCcraft extends JavaPlugin{
         configFile = new File(getDataFolder(), "config.yml");
         if(!configFile.exists()){
 
+            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "No config file found, generating one, please reload the plugin");
             BukkitRunnable r = new BukkitRunnable() {
                 @Override
                 public void run() {
-                    Bukkit.getServer().broadcastMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "No config file found, generating one, please reload the plugin");
+                    Bukkit.getServer().broadcastMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "No config file found, generating one, please /reload or reload the individual plugin");
                 }
             };
-            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "No config file found, generating one, please reload the plugin");
+
             r.runTaskAsynchronously(this);
 
             try{
-                if(configFile.createNewFile()) ;
+                if(getDataFolder().mkdir());
+                else{
+                    Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Error creating BTCcraft directory");
+                    Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Either create the plugins/BTCcraft folder or experience unintended issues");
+                    this.getPluginLoader().disablePlugin(this);
+                }
+                if(configFile.createNewFile());
                 else{
                     Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Error creating config.yml");
                     Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Either create the file config.yml in your plugins/BTCcraft folder or experience unintended issues");
                     //print line number for debugging purposes for server runner
                     Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Line Number: " + Thread.currentThread().getStackTrace()[1].getLineNumber());
+                    this.getPluginLoader().disablePlugin(this);
                 }
             }catch(IOException e){
                 Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Error creating config.yml");
@@ -102,7 +111,9 @@ public class BTCcraft extends JavaPlugin{
                 //print line number for debugging purposes for server runner
                 Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Line Number: " + Thread.currentThread().getStackTrace()[1].getLineNumber());
                 e.printStackTrace();
+                this.getPluginLoader().disablePlugin(this);
             }
+            this.getPluginLoader().disablePlugin(this);
             return;
         }
         //create config and set default's
@@ -191,10 +202,10 @@ public class BTCcraft extends JavaPlugin{
                 JSONObject adminJSON = new JSONObject();
 
                 adminJSON.put("UUID", "admin");
-                adminJSON.put("address", adminAddress);
-                adminJSON.put("fee", "10");
+                adminJSON.put("deposit", adminAddress.toString());
+                adminJSON.put("fee", Long.toString(adminWallet.getFee()));
                 adminJSON.put("mnemonic", adminWallet.getMnemonic());
-                adminJSON.put("creation time", adminWallet.getCreationTime());
+                adminJSON.put("creationtime", Long.toString(adminWallet.getCreationTime()));
 
                 walletsArray.add(adminJSON);
 
@@ -206,9 +217,11 @@ public class BTCcraft extends JavaPlugin{
                     Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Failed writing to playerwallets.json");
                     e.printStackTrace();
                 }
+
+                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "BTCcraft enabled, safe to rejoin server");
             }else{
                 //restore admin wallet from .json/db file
-                //create new constructor in BTCcraftWallet, one that includes deposit address, 
+                //create new constructor in BTCcraftWallet, one that includes deposit address,
             }
         }
 
@@ -242,9 +255,13 @@ public class BTCcraft extends JavaPlugin{
             @Override
             protected void onSetupCompleted() {
                 Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "WalletAppKit finished initializing");
-                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Finishing Setup...");
+                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Finishing Setup, " + ChatColor.RED + ChatColor.UNDERLINE + ChatColor.BOLD + "please wait until safe to join message appears...");
             }
         };
+
+        for(Player p : getServer().getOnlinePlayers()){
+            p.kickPlayer(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "BTCCRAFT initializing, " + ChatColor.RED + ChatColor.UNDERLINE + ChatColor.BOLD + "please wait to join (check console)");
+        }
 
         kit.startAsync();
         kit.awaitRunning();
@@ -252,7 +269,7 @@ public class BTCcraft extends JavaPlugin{
 
     public BTCcraftWallet generateAdminWallet(){
         Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Generating Admin wallet address...");
-        BTCcraftWallet adminWallet = new BTCcraftWallet(params, null, kit);
+        BTCcraftWallet adminWallet = new BTCcraftWallet(params,KeyChainGroup.createBasic(params));
 
         kit.chain().addWallet(adminWallet.getWallet());
 
@@ -260,7 +277,20 @@ public class BTCcraft extends JavaPlugin{
     }
 
     public BTCcraftWallet generatePlayerWallet(Player player){
-        Address a;
+        //generate the new wallet
+        BTCcraftWallet playerWallet = new BTCcraftWallet(params, KeyChainGroup.createBasic(params), player);
+
+        //add to the WalletAppKit
+        kit.chain().addWallet(playerWallet.getWallet());
+
+        //Add to the wallet cache, adding to player cache is handled in EntityEvent onPlayerJoin
+        addToWalletCache(player, playerWallet);
+
+        //Add to the wallets file
+        appendToWallets(getUUIDFromCache(player), playerWallet);
+
+        return playerWallet;
+        /*Address a;
         kit = new WalletAppKit(params, new File(getDataFolder().toString() + "/wallets"), filePrefix){
             @Override
             protected void onSetupCompleted() {
@@ -312,7 +342,7 @@ public class BTCcraft extends JavaPlugin{
                 Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: Coin1: " + coin1.value);
             }
         });
-        return null;
+        return null;*/
     }
 
     public void openConnection() throws SQLException, ClassNotFoundException {
@@ -342,18 +372,19 @@ public class BTCcraft extends JavaPlugin{
     }
 
     @SuppressWarnings("unchecked")
-    public boolean appendToWallets(String uuid, String address){
+    public boolean appendToWallets(UUID uuid, BTCcraftWallet w){
         try{
             JSONParser parser = new JSONParser();
             JSONArray wallets = (JSONArray) parser.parse(new FileReader(walletsFile.getPath()));
 
             JSONObject testObject = new JSONObject();
 
-            testObject.put("UUID",uuid);
-            testObject.put("deposit", address);
-            testObject.put("set","");
-            testObject.put("fee", "10");
-            testObject.put("mnemonic", "");
+            testObject.put("UUID", uuid.toString());
+            testObject.put("deposit", w.getDepositaddress().toString());
+            testObject.put("set", w.getSetaddress().toString());
+            testObject.put("fee", Long.toString(w.getFee()));
+            testObject.put("mnemonic", w.getMnemonic());
+            testObject.put("creationtime", Long.toString(w.getCreationTime()));
 
             wallets.add(testObject);
 
