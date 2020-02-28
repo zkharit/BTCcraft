@@ -26,6 +26,10 @@ public class WalletCommand implements CommandExecutor {
             Player player = (Player) commandSender;
 
             BTCcraftWallet wallet = btccraft.getBTCcrafWalletFromCache(player);
+            if(wallet == null){
+                player.sendMessage(ChatColor.YELLOW + "Could not find a wallet associated with your player");
+                return true;
+            }
             Address a = wallet.getDepositaddress();
             Address b = wallet.getSetaddress();
 
