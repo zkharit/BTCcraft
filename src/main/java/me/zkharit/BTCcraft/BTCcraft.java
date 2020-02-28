@@ -445,4 +445,44 @@ public class BTCcraft extends JavaPlugin{
     public boolean isAllowJoin() {
         return allowJoin;
     }
+
+    public BTCcraftWallet getPlayerWallet(Player player){
+        UUID uuid = getUUIDFromCache(player);
+
+        try{
+            JSONParser parser = new JSONParser();
+            JSONArray wallets = (JSONArray)parser.parse(new FileReader(walletsFile.getPath()));
+
+            for(int i = 0; i < wallets.size(); i++){
+                JSONObject j = (JSONObject)wallets.get(i);
+
+                if(j.containsValue(uuid.toString())){
+
+                    String mnemonic = (String) j.get("mnemonic");
+                    long creationTime = Long.parseLong((String) j.get("creationtime"));
+                    Address depositAddress = LegacyAddress.fromString(params, (String) j.get("deposit"));
+                    Address setAddress = LegacyAddress.fromString(params, (String) j.get("set"));
+                    long fee = Long.parseLong((String) j.get("fee"));
+
+                    BTCcraftWallet b = new BTCcraftWallet(params, KeyChainGroup.createBasic(params), player, depositAddress, setAddress, mnemonic, creationTime, fee);
+
+                    addToWalletCache(player, b);
+
+                    kit.chain().addWallet(b.getWallet());
+
+                    appendToWallets(uuid, b);
+                    return b;
+                }
+            }
+
+        }catch(IOException e){
+            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: Error using playerwallets.json");
+            e.printStackTrace();
+        }catch(ParseException e){
+            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: Error parsing from playerwallets.json");
+            e.printStackTrace();
+        }
+
+        return null;
+    }
 }

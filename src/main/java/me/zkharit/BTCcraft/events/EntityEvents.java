@@ -26,10 +26,23 @@ public class EntityEvents implements Listener {
         }
         Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: "+ ChatColor.AQUA + player.getName() + ChatColor.RESET + " has joined the server");
         btccraft.addToPlayerCache(player, player.getUniqueId());
+
         if(!player.hasPlayedBefore()){
             generatePlayerWallet(btccraft, player);
+        }else{
+            getPlayerWallet(btccraft, player);
         }
 
+    }
+
+    private void getPlayerWallet(BTCcraft b, Player player) {
+        BTCcraftWallet wallet = b.getPlayerWallet(player);
+
+        if(wallet == null){
+            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.AQUA  + player.getName() + ChatColor.RESET + " does not have a wallet");
+        }else{
+            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.AQUA + "Added " + player.getName() + "'s" + ChatColor.RESET + " wallet to the wallet cache");
+        }
     }
 
     @EventHandler
@@ -42,9 +55,9 @@ public class EntityEvents implements Listener {
     private void generatePlayerWallet(BTCcraft b, Player player){
         if(b.isGenPlayerWallets()) {
             BTCcraftWallet wallet = b.generatePlayerWallet(player);
-            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: "+ ChatColor.AQUA + "generated " + player.getName() + ChatColor.RESET +" wallet address: " + wallet.getDepositaddress());
+            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: "+ ChatColor.AQUA + "Generated " + player.getName() + ChatColor.RESET + " wallet address: " + wallet.getDepositaddress());
         }else{
-            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: "+ ChatColor.RESET + "skipping player address creation disabled in config");
+            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: "+ ChatColor.RESET + "Skipping player address creation disabled in config");
         }
     }
 }

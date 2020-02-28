@@ -4,8 +4,11 @@ import org.bitcoinj.core.*;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.bitcoinj.wallet.KeyChainGroup;
+import org.bitcoinj.wallet.UnreadableWalletException;
 import org.bitcoinj.wallet.Wallet;
 
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 public class BTCcraftWallet extends Wallet {
@@ -67,6 +70,25 @@ public class BTCcraftWallet extends Wallet {
         //add to wallet cache
         //add to kit same way
         //should work (i think) (hopefullly)
+    }
+
+    public BTCcraftWallet(NetworkParameters params, KeyChainGroup keyChainGroup, Player p, Address da, Address sa, String mnemonicSeed, long ctime, long f){
+        super(params, keyChainGroup);
+
+        depositaddress = da;
+        setaddress = sa;
+        mnemonic = mnemonicSeed;
+        creationTime = ctime;
+        fee = f;
+        player = p;
+
+        try {
+            DeterministicSeed d = new DeterministicSeed(mnemonic, null, "", creationTime);
+            wallet = Wallet.fromSeed(params, d, Script.ScriptType.P2PKH);
+
+        }catch(UnreadableWalletException e){
+            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Could not restore " + ChatColor.YELLOW + player.getName() + "'s " + ChatColor.RESET + "wallet");
+        }
     }
 
     public Address getDepositaddress() {
