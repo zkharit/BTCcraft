@@ -264,6 +264,7 @@ public class BTCcraft extends JavaPlugin{
         BTCcraftWallet adminWallet = new BTCcraftWallet(params,KeyChainGroup.createBasic(params));
 
         kit.chain().addWallet(adminWallet.getWallet());
+        kit.peerGroup().addWallet(adminWallet.getWallet());
 
         return adminWallet;
     }
@@ -274,6 +275,7 @@ public class BTCcraft extends JavaPlugin{
 
         //add to the WalletAppKit
         kit.chain().addWallet(playerWallet.getWallet());
+        kit.peerGroup().addWallet(playerWallet.getWallet());
 
         //Add to the wallet cache, adding to player cache is handled in EntityEvent onPlayerJoin
         addToWalletCache(player, playerWallet);
@@ -437,6 +439,7 @@ public class BTCcraft extends JavaPlugin{
                     addToWalletCache(player, b);
 
                     kit.chain().addWallet(b.getWallet());
+                    kit.peerGroup().addWallet(b.getWallet());
                     return b;
                 }
             }
@@ -472,6 +475,7 @@ public class BTCcraft extends JavaPlugin{
                     addToWalletCache(null, b);
 
                     kit.chain().addWallet(b.getWallet());
+                    kit.peerGroup().addWallet(b.getWallet());
                     return;
                 }
             }
