@@ -1,23 +1,19 @@
 package me.zkharit.BTCcraft.commands;
 
 import me.zkharit.BTCcraft.BTCcraft;
-import org.bitcoinj.core.Address;
 import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.params.TestNet3Params;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.conversations.Conversation;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 public class SetAddressCommand implements CommandExecutor {
-    private BTCcraft btcraft;
+    private BTCcraft btccraft;
 
     public SetAddressCommand(BTCcraft b){
-        btcraft = b;
+        btccraft = b;
     }
 
     @Override
@@ -42,10 +38,10 @@ public class SetAddressCommand implements CommandExecutor {
 
             player.sendMessage(ChatColor.RED + "" + ChatColor.BOLD + "WARNING - No address checking is done here make sure the address you set is correct");
 
-            btcraft.getBTCcrafWalletFromCache(player).setSetaddress(LegacyAddress.fromString(TestNet3Params.get(), strings[0]));
-            player.sendMessage(ChatColor.AQUA + "Successfully set address as: " + ChatColor.YELLOW + ChatColor.BOLD + btcraft.getBTCcrafWalletFromCache(player).getSetaddress());
+            btccraft.getBTCcrafWalletFromCache(player).setSetaddress(LegacyAddress.fromString(TestNet3Params.get(), strings[0]));
+            player.sendMessage(ChatColor.AQUA + "Successfully set address as: " + ChatColor.YELLOW + ChatColor.BOLD + btccraft.getBTCcrafWalletFromCache(player).getSetaddress());
 
-            //Need to update .json file as well for this operation!!!
+            btccraft.updateJSON(btccraft.getUUIDFromCache(player).toString(), "set", btccraft.getBTCcrafWalletFromCache(player).getSetaddress().toString());
         }
 
         return true;

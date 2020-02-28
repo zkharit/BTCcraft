@@ -23,10 +23,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -409,5 +406,33 @@ public class BTCcraft extends JavaPlugin{
 
     public void removeFromWalletCache(Player player){
         walletCache.remove(player);
+    }
+
+    public void updateJSON(String uuid, String attribute, String value){
+        try {
+            JSONParser parser = new JSONParser();
+            JSONArray wallets = (JSONArray) parser.parse(new FileReader(walletsFile.getPath()));
+
+            for(int i = 0; i < wallets.size(); i++){
+                JSONObject j = (JSONObject) wallets.get(i);
+
+                if(j.containsValue(uuid)){
+                    j.put(attribute, value);
+
+                    wallets.set(i, j);
+
+                    playerwalletsWriter = new FileWriter(walletsFile.getPath());
+                    playerwalletsWriter.append(wallets.toString());
+                    playerwalletsWriter.close();
+                    break;
+                }
+            }
+        }catch(IOException e){
+            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: Error updating playerwallets.json");
+            e.printStackTrace();
+        }catch(ParseException e){
+            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: Error parsing from playerwallets.json");
+            e.printStackTrace();
+        }
     }
 }
