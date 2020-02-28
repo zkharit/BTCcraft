@@ -7,9 +7,13 @@ import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.UnreadableWalletException;
 import org.bitcoinj.wallet.Wallet;
 
+import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
+
+import java.util.concurrent.TimeUnit;
 
 public class BTCcraftWallet extends Wallet {
     private Address depositaddress;
@@ -19,6 +23,39 @@ public class BTCcraftWallet extends Wallet {
     private Wallet wallet;
     private Player player;
     private long creationTime;
+    /*kit.wallet().addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
+        @Override
+        public void onCoinsReceived(Wallet wallet, Transaction tx, Coin coin, Coin coin1) {
+            BukkitRunnable r = new BukkitRunnable() {
+                @Override
+                public void run() {
+                    Bukkit.getServer().broadcastMessage(ChatColor.RED + "BTCCRAFT ERROR: Received 0 Confirmations");
+
+                }
+            };
+            r.runTaskAsynchronously(btCcraft);
+            while(tx.getConfidence().getDepthInBlocks() < 1){
+                BukkitRunnable k = new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        Bukkit.getServer().broadcastMessage(ChatColor.RED + "BTCCRAFT ERROR: Waiting for confirmations");
+
+                    }
+                };
+                k.runTaskAsynchronously(btCcraft);
+                try {
+                    TimeUnit.MINUTES.sleep(1);
+                } catch (InterruptedException e) {
+                    Bukkit.getServer().getConsoleSender().sendMessage("Something exception");
+                    e.printStackTrace();
+                }
+            }
+            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: Received coins??? block depth of: " + tx.getConfidence().getDepthInBlocks());
+            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: Coin: " + coin.value);
+            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: Coin1: " + coin1.value);
+        }
+    });
+        return null;*/
 
     public BTCcraftWallet(NetworkParameters params, KeyChainGroup keyChainGroup) {
         super(params, keyChainGroup);
@@ -32,6 +69,26 @@ public class BTCcraftWallet extends Wallet {
         mnemonic = Utils.SPACE_JOINER.join(seed.getMnemonicCode());
         depositaddress = wallet.currentReceiveAddress();
         setaddress = depositaddress;
+
+        wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
+            @Override
+            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin coin, Coin coin1) {
+                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Admin wallet received transaction, waiting for confirmation, trying once a minute");
+
+                while(tx.getConfidence().getDepthInBlocks() < 1){
+                    Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "txid: " + ChatColor.AQUA + tx.getTxId() + ChatColor.RESET + " still awaiting confirmation");
+
+                    try {
+                        TimeUnit.MINUTES.sleep(1);
+                    } catch (InterruptedException e) {
+                        Bukkit.getServer().getConsoleSender().sendMessage("Something exception");
+                        e.printStackTrace();
+                    }
+                }
+                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "txid: " + ChatColor.AQUA + tx.getTxId() + ChatColor.RESET + " has 1 confirmation");
+                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Received: " + tx.getValueSentToMe(wallet).toFriendlyString() + ChatColor.RESET + " from txid: " + ChatColor.AQUA + tx.getTxId());
+            }
+        });
 
         //Dont use kit.wallet()
         //Create a new deterministic wallet each time, then add to the kit with kit.chain().addwallet(wallet)
@@ -88,7 +145,31 @@ public class BTCcraftWallet extends Wallet {
 
         }catch(UnreadableWalletException e){
             Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Could not restore " + ChatColor.YELLOW + player.getName() + "'s " + ChatColor.RESET + "wallet");
+            e.printStackTrace();
         }
+    }
+
+    public BTCcraftWallet(NetworkParameters params, KeyChainGroup keyChainGroup, Address da, String mnemonicSeed, long ctime, long f){
+        super(params, keyChainGroup);
+
+        depositaddress = da;
+        setaddress = da;
+        mnemonic = mnemonicSeed;
+        creationTime = ctime;
+        fee = f;
+
+        DeterministicSeed d;
+        try {
+            d = new DeterministicSeed(mnemonic, null, "", creationTime);
+            wallet = Wallet.fromSeed(params, d, Script.ScriptType.P2PKH);
+        } catch (UnreadableWalletException e) {
+            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Could not restore " + ChatColor.RED + "ADMIN wallet " + ChatColor.RESET + "please investigate");
+            e.printStackTrace();
+        }
+
+        //add wallet listener
+        //look into wallet.saveToFile and restoring that, that prob has all transactions of a wallet stored so we can get them on restarts/reloads/rejoins
+        //might need to step away from WalletAppKit and have a whole instance for each and every wallet?, have to look into RestoreFromSeed.java
     }
 
     public Address getDepositaddress() {

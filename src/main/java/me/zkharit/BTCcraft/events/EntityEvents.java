@@ -30,13 +30,13 @@ public class EntityEvents implements Listener {
         if(!player.hasPlayedBefore()){
             generatePlayerWallet(btccraft, player);
         }else{
-            getPlayerWallet(btccraft, player);
+            getPlayerWalletFromJSON(btccraft, player);
         }
 
     }
 
-    private void getPlayerWallet(BTCcraft b, Player player) {
-        BTCcraftWallet wallet = b.getPlayerWallet(player);
+    private void getPlayerWalletFromJSON(BTCcraft b, Player player) {
+        BTCcraftWallet wallet = b.getPlayerWalletFromJSON(player);
 
         if(wallet == null){
             Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.AQUA  + player.getName() + ChatColor.RESET + " does not have a wallet");

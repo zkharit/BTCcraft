@@ -208,8 +208,7 @@ public class BTCcraft extends JavaPlugin{
 
                 Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "BTCcraft enabled, safe to rejoin server");
             }else{
-                //restore admin wallet from .json/db file
-                //create new constructor in BTCcraftWallet, one that includes deposit address,
+                getAdminWalletFromJSON();
             }
         }
 
@@ -222,7 +221,7 @@ public class BTCcraft extends JavaPlugin{
         this.getCommand("adminsendaddress").setExecutor(new AdminSendAddressCommand(kit));
         this.getCommand("setadmintxfee").setExecutor(new SetAdminTXFeeCommand());
         this.getCommand("setaddress").setExecutor(new SetAddressCommand(this));
-        this.getCommand("withdraw").setExecutor(new WithdrawCommand());
+        this.getCommand("withdraw").setExecutor(new WithdrawCommand(this));
         this.getCommand("generateaddress").setExecutor(new GenerateAddressCommand(this));
         this.getCommand("getplayeraddress").setExecutor(new GetPlayerAddressCommand(this));
         this.getCommand("getmnemonic").setExecutor(new GetMnemonicCommand(this));
@@ -303,39 +302,7 @@ public class BTCcraft extends JavaPlugin{
 
         Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Wallet: " + a.toString());
 
-        kit.wallet().addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
-            @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin coin, Coin coin1) {
-                BukkitRunnable r = new BukkitRunnable() {
-                    @Override
-                    public void run() {
-                        Bukkit.getServer().broadcastMessage(ChatColor.RED + "BTCCRAFT ERROR: Received 0 Confirmations");
-
-                    }
-                };
-                r.runTaskAsynchronously(btCcraft);
-                while(tx.getConfidence().getDepthInBlocks() < 1){
-                    BukkitRunnable k = new BukkitRunnable() {
-                        @Override
-                        public void run() {
-                            Bukkit.getServer().broadcastMessage(ChatColor.RED + "BTCCRAFT ERROR: Waiting for confirmations");
-
-                        }
-                    };
-                    k.runTaskAsynchronously(btCcraft);
-                    try {
-                        TimeUnit.MINUTES.sleep(1);
-                    } catch (InterruptedException e) {
-                        Bukkit.getServer().getConsoleSender().sendMessage("Something exception");
-                        e.printStackTrace();
-                    }
-                }
-                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: Received coins??? block depth of: " + tx.getConfidence().getDepthInBlocks());
-                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: Coin: " + coin.value);
-                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: Coin1: " + coin1.value);
-            }
-        });
-        return null;*/
+        */
     }
 
     public void openConnection() throws SQLException, ClassNotFoundException {
@@ -412,6 +379,7 @@ public class BTCcraft extends JavaPlugin{
 
     public void removeFromWalletCache(Player player){
         walletCache.remove(player);
+        //kit.chain().removeWallet(getBTCcrafWalletFromCache(player).getWallet());
     }
 
     public void updateJSON(String uuid, String attribute, String value){
@@ -428,7 +396,7 @@ public class BTCcraft extends JavaPlugin{
                     wallets.set(i, j);
 
                     playerwalletsWriter = new FileWriter(walletsFile.getPath());
-                    playerwalletsWriter.append(wallets.toString());
+                    playerwalletsWriter.write(wallets.toString());
                     playerwalletsWriter.close();
                     break;
                 }
@@ -446,7 +414,7 @@ public class BTCcraft extends JavaPlugin{
         return allowJoin;
     }
 
-    public BTCcraftWallet getPlayerWallet(Player player){
+    public BTCcraftWallet getPlayerWalletFromJSON(Player player){
         UUID uuid = getUUIDFromCache(player);
 
         try{
@@ -469,8 +437,6 @@ public class BTCcraft extends JavaPlugin{
                     addToWalletCache(player, b);
 
                     kit.chain().addWallet(b.getWallet());
-
-                    appendToWallets(uuid, b);
                     return b;
                 }
             }
@@ -484,5 +450,39 @@ public class BTCcraft extends JavaPlugin{
         }
 
         return null;
+    }
+
+    public void getAdminWalletFromJSON(){
+        try{
+            JSONParser parser = new JSONParser();
+            JSONArray wallets = (JSONArray)parser.parse(new FileReader(walletsFile.getPath()));
+
+            for(int i = 0; i < wallets.size(); i++){
+                JSONObject j = (JSONObject)wallets.get(i);
+
+                if(j.containsValue("admin")){
+
+                    String mnemonic = (String) j.get("mnemonic");
+                    long creationTime = Long.parseLong((String) j.get("creationtime"));
+                    Address depositAddress = LegacyAddress.fromString(params, (String) j.get("deposit"));
+                    long fee = Long.parseLong((String) j.get("fee"));
+
+                    BTCcraftWallet b = new BTCcraftWallet(params, KeyChainGroup.createBasic(params), depositAddress, mnemonic, creationTime, fee);
+
+                    addToWalletCache(null, b);
+
+                    kit.chain().addWallet(b.getWallet());
+                    return;
+                }
+            }
+            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + " couldn't restore admin wallet from playerwallets.json file, please inspect");
+
+        }catch(IOException e){
+            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: Error using playerwallets.json");
+            e.printStackTrace();
+        }catch(ParseException e){
+            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: Error parsing from playerwallets.json");
+            e.printStackTrace();
+        }
     }
 }
