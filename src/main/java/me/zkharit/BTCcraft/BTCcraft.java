@@ -60,6 +60,8 @@ public class BTCcraft extends JavaPlugin{
 
     private BTCcraft btCcraft = this;
 
+    private boolean allowJoin = true;
+
     @Override
     @SuppressWarnings("unchecked")
     public void onEnable(){
@@ -250,8 +252,12 @@ public class BTCcraft extends JavaPlugin{
             p.kickPlayer(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "BTCCRAFT initializing, " + ChatColor.RED + ChatColor.UNDERLINE + ChatColor.BOLD + "please wait to join (check console)");
         }
 
+        allowJoin = false;
+
         kit.startAsync();
         kit.awaitRunning();
+
+        allowJoin = true;
     }
 
     public BTCcraftWallet generateAdminWallet(){
@@ -434,5 +440,9 @@ public class BTCcraft extends JavaPlugin{
             Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: Error parsing from playerwallets.json");
             e.printStackTrace();
         }
+    }
+
+    public boolean isAllowJoin() {
+        return allowJoin;
     }
 }
