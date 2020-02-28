@@ -19,11 +19,11 @@ import org.bukkit.entity.Player;
 
 public class SendAddressCommand implements CommandExecutor {
     private WalletAppKit kit;
-    private BTCcraft btcraft;
+    private BTCcraft btccraft;
 
     public SendAddressCommand(WalletAppKit k, BTCcraft b){
         kit = k;
-        btcraft = b;
+        btccraft = b;
     }
 
     @Override
@@ -73,7 +73,7 @@ public class SendAddressCommand implements CommandExecutor {
 
             //attempt to send, or let the user know they dont have enough money
             try {
-                result = kit.wallet().sendCoins(kit.peerGroup(), req);
+                result = btccraft.getBTCcrafWalletFromCache(player).getWallet().sendCoins(kit.peerGroup(), req);
             } catch (InsufficientMoneyException e) {
                 player.sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.AQUA + "Not Enough Money");
                 //e.printStackTrace(); insufficient fund requests spam console

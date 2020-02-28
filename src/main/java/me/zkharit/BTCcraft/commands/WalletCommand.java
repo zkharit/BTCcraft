@@ -33,6 +33,7 @@ public class WalletCommand implements CommandExecutor {
             if(a != b){
                 player.sendMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "Set Address: " + ChatColor.YELLOW + b);
             }
+            player.sendMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "Fee (sat/kb): " + ChatColor.YELLOW + wallet.getFee());
             player.sendMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "Balance: " + ChatColor.YELLOW + wallet.getBalance());
             player.sendMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "View your wallet here: " + ChatColor.YELLOW + ChatColor.UNDERLINE + "https://www.blockchain.com/btc/address/" + a);
         }
