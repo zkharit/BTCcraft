@@ -48,8 +48,12 @@ public class EntityEvents implements Listener {
     @EventHandler
     public void onPlayerLeave(PlayerQuitEvent event){
         Player player = event.getPlayer();
+        BTCcraftWallet b = btccraft.getBTCcrafWalletFromCache(player);
+        b.savePlayerWallet(btccraft);
+
         btccraft.removeFromPlayerCache(player);
         btccraft.removeFromWalletCache(player);
+
     }
 
     private void generatePlayerWallet(BTCcraft b, Player player){
