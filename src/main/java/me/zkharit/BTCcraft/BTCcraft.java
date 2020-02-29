@@ -5,6 +5,7 @@ import me.zkharit.BTCcraft.events.EntityEvents;
 import me.zkharit.BTCcraft.events.ServerEvents;
 
 import org.bitcoinj.core.*;
+import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.wallet.KeyChainGroup;
@@ -56,7 +57,7 @@ public class BTCcraft extends JavaPlugin{
 
     private NetworkParameters params = new TestNet3Params();
     private String filePrefix = "wallet";
-    private WalletAppKit kit;
+    //private WalletAppKit kit;
 
     private BTCcraft btCcraft = this;
 
@@ -131,7 +132,7 @@ public class BTCcraft extends JavaPlugin{
         //use db or not
         useDatabase = config.getBoolean("Use Database");
 
-        startBTCservice();
+        //startBTCservice();
 
         if(useDatabase){
             username = config.getString("username");
@@ -214,12 +215,12 @@ public class BTCcraft extends JavaPlugin{
 
         //set command executors
         this.getCommand("wallet").setExecutor(new WalletCommand(this));
-        this.getCommand("sendaddress").setExecutor(new SendAddressCommand(kit, this));
-        this.getCommand("sendplayer").setExecutor(new SendPlayerCommand());
-        this.getCommand("settxfee").setExecutor(new SetTXFeeCommand());
-        this.getCommand("adminsendplayer").setExecutor(new AdminSendPlayerCommand());
-        this.getCommand("adminsendaddress").setExecutor(new AdminSendAddressCommand(kit));
-        this.getCommand("setadmintxfee").setExecutor(new SetAdminTXFeeCommand());
+        this.getCommand("sendaddress").setExecutor(new SendAddressCommand(this));
+        this.getCommand("sendplayer").setExecutor(new SendPlayerCommand(this));
+        this.getCommand("settxfee").setExecutor(new SetTXFeeCommand(this));
+        this.getCommand("adminsendplayer").setExecutor(new AdminSendPlayerCommand(this));
+        this.getCommand("adminsendaddress").setExecutor(new AdminSendAddressCommand(this));
+        this.getCommand("setadmintxfee").setExecutor(new SetAdminTXFeeCommand(this));
         this.getCommand("setaddress").setExecutor(new SetAddressCommand(this));
         this.getCommand("withdraw").setExecutor(new WithdrawCommand(this));
         this.getCommand("generateaddress").setExecutor(new GenerateAddressCommand(this));
@@ -234,11 +235,18 @@ public class BTCcraft extends JavaPlugin{
 
     @Override
     public void onDisable(){
-        //write cache to .json file or db
-        //kit.stopAsync();
+        //write cache to .json file or db (actually shouldn't need to do this cuz we do it on updates
+        BTCcraftWallet adminWallet = getBTCcrafWalletFromCache(null);
+        try {
+            adminWallet.getWallet().saveToFile(new File(walletsDirectory, "admin.wallet"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        //go through cache and run .stopAsync() on all peer groups of wallets in the cache
+        //also saveallwallets to file
     }
 
-    private void startBTCservice(){
+    /*private void startBTCservice(){
         kit = new WalletAppKit(params, walletsDirectory, filePrefix) {
             @Override
             protected void onSetupCompleted() {
@@ -257,25 +265,25 @@ public class BTCcraft extends JavaPlugin{
         kit.awaitRunning();
 
         allowJoin = true;
-    }
+    }*/
 
     public BTCcraftWallet generateAdminWallet(){
         Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Generating Admin wallet address...");
-        BTCcraftWallet adminWallet = new BTCcraftWallet(params,KeyChainGroup.createBasic(params));
+        BTCcraftWallet adminWallet = new BTCcraftWallet(params,KeyChainGroup.createBasic(params), this);
 
-        kit.chain().addWallet(adminWallet.getWallet());
-        kit.peerGroup().addWallet(adminWallet.getWallet());
+        //kit.chain().addWallet(adminWallet.getWallet());
+        //kit.peerGroup().addWallet(adminWallet.getWallet());
 
         return adminWallet;
     }
 
     public BTCcraftWallet generatePlayerWallet(Player player){
         //generate the new wallet
-        BTCcraftWallet playerWallet = new BTCcraftWallet(params, KeyChainGroup.createBasic(params), player);
+        BTCcraftWallet playerWallet = new BTCcraftWallet(params, KeyChainGroup.createBasic(params), player, this);
 
         //add to the WalletAppKit
-        kit.chain().addWallet(playerWallet.getWallet());
-        kit.peerGroup().addWallet(playerWallet.getWallet());
+        //kit.chain().addWallet(playerWallet.getWallet());
+        //kit.peerGroup().addWallet(playerWallet.getWallet());
 
         //Add to the wallet cache, adding to player cache is handled in EntityEvent onPlayerJoin
         addToWalletCache(player, playerWallet);
@@ -434,12 +442,12 @@ public class BTCcraft extends JavaPlugin{
                     Address setAddress = LegacyAddress.fromString(params, (String) j.get("set"));
                     long fee = Long.parseLong((String) j.get("fee"));
 
-                    BTCcraftWallet b = new BTCcraftWallet(params, KeyChainGroup.createBasic(params), player, depositAddress, setAddress, mnemonic, creationTime, fee);
+                    BTCcraftWallet b = new BTCcraftWallet(params, KeyChainGroup.createBasic(params), player, depositAddress, setAddress, mnemonic, creationTime, fee, this);
 
                     addToWalletCache(player, b);
 
-                    kit.chain().addWallet(b.getWallet());
-                    kit.peerGroup().addWallet(b.getWallet());
+                    //kit.chain().addWallet(b.getWallet());
+                    //kit.peerGroup().addWallet(b.getWallet());
                     return b;
                 }
             }
@@ -470,12 +478,28 @@ public class BTCcraft extends JavaPlugin{
                     Address depositAddress = LegacyAddress.fromString(params, (String) j.get("deposit"));
                     long fee = Long.parseLong((String) j.get("fee"));
 
-                    BTCcraftWallet b = new BTCcraftWallet(params, KeyChainGroup.createBasic(params), depositAddress, mnemonic, creationTime, fee);
+                    BTCcraftWallet b = new BTCcraftWallet(params, KeyChainGroup.createBasic(params), depositAddress, mnemonic, creationTime, fee, this);
 
                     addToWalletCache(null, b);
 
-                    kit.chain().addWallet(b.getWallet());
-                    kit.peerGroup().addWallet(b.getWallet());
+                    //kit.chain().addWallet(b.getWallet());
+                    //kit.peerGroup().addWallet(b.getWallet());
+
+                    //Next thing to try***
+                    /*DownloadProgressTracker d = new DownloadProgressTracker(){
+                        @Override
+                        public void doneDownload(){
+                            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "Done downloading blockchain, check balance");
+                        }
+                    };*/
+
+                    //kit.peerGroup().stop();
+
+                    //kit.peerGroup().start();
+                    //kit.peerGroup().startBlockChainDownload(d);
+
+                    Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "Check now");
+
                     return;
                 }
             }
