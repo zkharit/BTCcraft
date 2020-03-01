@@ -31,6 +31,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.UUID;
 
 public class BTCcraft extends JavaPlugin{
@@ -239,11 +240,32 @@ public class BTCcraft extends JavaPlugin{
         BTCcraftWallet adminWallet = getBTCcrafWalletFromCache(null);
         try {
             adminWallet.getWallet().saveToFile(new File(walletsDirectory, "admin.wallet"));
+            adminWallet.getPeerGroup().stopAsync();
+
+            removeFromWalletCache(null);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        //go through cache and run .stopAsync() on all peer groups of wallets in the cache
-        //also saveallwallets to file
+
+        saveStopWallets();
+    }
+
+    private void saveStopWallets(){
+        Iterator it = walletCache.entrySet().iterator();
+
+        while(it.hasNext()){
+            HashMap.Entry entry = (HashMap.Entry) it.next();
+            BTCcraftWallet b = (BTCcraftWallet)entry.getValue();
+
+            try {
+                b.getWallet().saveToFile(new File(walletsDirectory, getUUIDFromCache((Player)entry.getKey()).toString() + ".wallet"));
+                b.getPeerGroup().stop();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            it.remove();
+        }
     }
 
     /*private void startBTCservice(){
