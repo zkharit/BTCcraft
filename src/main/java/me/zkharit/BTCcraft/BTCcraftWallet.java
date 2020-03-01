@@ -182,13 +182,13 @@ public class BTCcraftWallet extends Wallet {
                 peerGroup.startAsync();
                 peerGroup.downloadBlockChain();
 
-                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + "Finished Restoring Admin wallet, you can now use BTCcraft commands");
+                player.sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + "Finished creating your wallet, you can now use BTCcraft commands");
             }
         };
 
         r.runTaskAsynchronously(btccraft);
 
-        Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Finished creating wallet and downloading blockchain");
+        //Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Finished creating wallet and downloading blockchain");
 
         DeterministicSeed seed = wallet.getKeyChainSeed();
         creationTime = seed.getCreationTimeSeconds();
@@ -228,7 +228,7 @@ public class BTCcraftWallet extends Wallet {
             wallet.saveToFile(playerWalletFile);
             Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.BLUE + "Saved Wallet");
         }catch(IOException e){
-            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Error writing to admin wallet file");
+            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Error writing to player wallet file");
             e.printStackTrace();
         }
 
@@ -293,13 +293,13 @@ public class BTCcraftWallet extends Wallet {
                 peerGroup.startAsync();
                 peerGroup.downloadBlockChain();
 
-                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + "Finished restoring player wallet, you can now use BTCcraft commands");
+                player.sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + "Finished restoring player wallet, you can now use BTCcraft commands");
             }
         };
 
         r.runTaskAsynchronously(btccraft);
 
-        Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Finished restoring wallet and downloading blockchain");
+        //Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Finished restoring wallet and downloading blockchain");
 
         wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
@@ -349,7 +349,6 @@ public class BTCcraftWallet extends Wallet {
             e.printStackTrace();
         }*/
 
-
         try {
             DeterministicSeed seed = new DeterministicSeed(mnemonic, null, "", creationTime);
             wallet = Wallet.fromSeed(parameters, seed, Script.ScriptType.P2PKH);
@@ -391,7 +390,7 @@ public class BTCcraftWallet extends Wallet {
 
         r.runTaskAsynchronously(btccraft);
 
-        Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Finished restoring wallet and downloading blockchain");
+        //Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Finished restoring wallet and downloading blockchain");
 
         wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
             @Override
