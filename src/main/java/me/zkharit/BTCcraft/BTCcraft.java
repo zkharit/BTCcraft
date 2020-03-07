@@ -211,6 +211,14 @@ public class BTCcraft extends JavaPlugin{
                 Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "BTCcraft enabled, safe to rejoin server");
             }else{
                 getAdminWalletFromJSON();
+
+                for(Player player : Bukkit.getOnlinePlayers()){
+                    BTCcraftWallet b = getPlayerWalletFromJSON(player);
+                    if(b != null){
+                        addToWalletCache(player, b);
+                    }
+                    addToPlayerCache(player, player.getUniqueId());
+                }
             }
         }
 
@@ -440,10 +448,6 @@ public class BTCcraft extends JavaPlugin{
             Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: Error parsing from playerwallets.json");
             e.printStackTrace();
         }
-    }
-
-    public boolean isAllowJoin() {
-        return allowJoin;
     }
 
     public BTCcraftWallet getPlayerWalletFromJSON(Player player){
