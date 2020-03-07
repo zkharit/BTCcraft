@@ -30,6 +30,12 @@ public class WalletCommand implements CommandExecutor {
                 player.sendMessage(ChatColor.YELLOW + "Could not find a wallet associated with your player");
                 return true;
             }
+
+            if(!wallet.getUsable()){
+                player.sendMessage(ChatColor.YELLOW + "Please wait until your wallet is finished being restored, this can take up to 5 minutes");
+                return true;
+            }
+
             Address a = wallet.getDepositaddress();
             Address b = wallet.getSetaddress();
 

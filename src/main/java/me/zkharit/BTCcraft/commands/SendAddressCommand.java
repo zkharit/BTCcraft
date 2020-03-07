@@ -29,7 +29,6 @@ public class SendAddressCommand implements CommandExecutor {
         if(strings.length != 2){
             return false;
         }
-        Player p;
 
         if(commandSender instanceof Player) {
 
@@ -56,6 +55,11 @@ public class SendAddressCommand implements CommandExecutor {
             //get player that sent the command
             Player player = (Player) commandSender;
             BTCcraftWallet playerWallet = btccraft.getBTCcrafWalletFromCache(player);
+
+            if(!playerWallet.getUsable()){
+                player.sendMessage(ChatColor.YELLOW + "Please wait until your wallet is finished being restored, this can take up to 5 minutes");
+                return true;
+            }
 
             //get address from first argument
             LegacyAddress send = LegacyAddress.fromBase58(playerWallet.getParams(), strings[0]);

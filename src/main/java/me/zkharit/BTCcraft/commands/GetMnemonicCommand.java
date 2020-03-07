@@ -2,7 +2,6 @@ package me.zkharit.BTCcraft.commands;
 
 import me.zkharit.BTCcraft.BTCcraft;
 import me.zkharit.BTCcraft.BTCcraftWallet;
-import org.bitcoinj.core.Address;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -22,9 +21,16 @@ public class GetMnemonicCommand implements CommandExecutor {
             return false;
         }
 
-        if(commandSender instanceof Player){
+        if(commandSender instanceof Player) {
             Player p = (Player) commandSender;
-            p.sendMessage(ChatColor.YELLOW + "" + ChatColor.BOLD + p.getName() + ChatColor.AQUA + " your mnemonic to restore your BTC wallet is: " + ChatColor.YELLOW + btccraft.getBTCcrafWalletFromCache(p).getMnemonic());
+
+            BTCcraftWallet pWallet = btccraft.getBTCcrafWalletFromCache(p);
+            if (pWallet.getUsable()) {
+                p.sendMessage(ChatColor.YELLOW + "" + ChatColor.BOLD + p.getName() + ChatColor.AQUA + " your mnemonic to restore your BTC wallet is: " + ChatColor.YELLOW + pWallet.getMnemonic());
+
+            }else{
+                p.sendMessage(ChatColor.YELLOW + "Please wait until your wallet is finished being restored, this can take up to 5 minutes");
+            }
         }
 
         return true;
