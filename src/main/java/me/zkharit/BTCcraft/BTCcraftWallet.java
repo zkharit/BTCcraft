@@ -32,6 +32,7 @@ public class BTCcraftWallet extends Wallet {
     File walletDirectory = new File("plugins/BTCcraft/wallets/");
     private PeerGroup peerGroup;
     private NetworkParameters parameters;
+    private boolean usable;
 
 
     public BTCcraftWallet(NetworkParameters params, KeyChainGroup keyChainGroup, BTCcraft btccraft) {
@@ -39,6 +40,7 @@ public class BTCcraftWallet extends Wallet {
         //admin wallet constructor
 
         parameters = params;
+        usable = false;
 
         final File adminWalletFile = new File(walletDirectory, "admin.wallet");
         try {
@@ -77,6 +79,7 @@ public class BTCcraftWallet extends Wallet {
                 peerGroup.startAsync();
                 peerGroup.downloadBlockChain();
 
+                usable = true;
                 Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + "Finished Restoring Admin wallet, you can now use BTCcraft commands");
             }
         };
@@ -143,6 +146,7 @@ public class BTCcraftWallet extends Wallet {
 
         parameters = params;
         player = p;
+        usable = false;
 
         final File playerWalletFile  = new File(walletDirectory, btccraft.getUUIDFromCache(player) +".wallet");
 
@@ -181,6 +185,8 @@ public class BTCcraftWallet extends Wallet {
                 peerGroup.addPeerDiscovery(new DnsDiscovery(parameters));
                 peerGroup.startAsync();
                 peerGroup.downloadBlockChain();
+
+                usable = true;
 
                 player.sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + "Finished creating your wallet, you can now use BTCcraft commands");
             }
@@ -255,6 +261,7 @@ public class BTCcraftWallet extends Wallet {
         creationTime = ctime;
         fee = f;
         player = p;
+        usable = false;
 
         final File playerWalletFile = new File(walletDirectory, btccraft.getUUIDFromCache(player) + ".wallet");
 
@@ -293,41 +300,43 @@ public class BTCcraftWallet extends Wallet {
                 peerGroup.startAsync();
                 peerGroup.downloadBlockChain();
 
-                player.sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + "Finished restoring player wallet, you can now use BTCcraft commands");
+                usable = true;
+
+                player.sendMessage(ChatColor.YELLOW + "" + ChatColor.BOLD +"BTCCRAFT INFO: " + "Finished restoring you wallet, you can now use BTCcraft commands");
+
+                wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
+                    @Override
+                    public void onCoinsReceived(Wallet wallet, Transaction tx, Coin coin, Coin coin1) {
+                        player.sendMessage(ChatColor.YELLOW + "Transaction Alert! : " + ChatColor.RESET + "Your wallet received a transaction, waiting for confirmation, checking once a minute");
+
+                        while(tx.getConfidence().getDepthInBlocks() < 1){
+                            player.sendMessage(ChatColor.YELLOW + "TXid: " + ChatColor.AQUA + tx.getTxId() + ChatColor.YELLOW + " still awaiting confirmation");
+
+                            try {
+                                TimeUnit.MINUTES.sleep(1);
+                            } catch (InterruptedException e) {
+                                Bukkit.getServer().getConsoleSender().sendMessage("Something exception");
+                                e.printStackTrace();
+                            }
+                        }
+
+                        try {
+                            wallet.saveToFile(playerWalletFile);
+                        } catch (IOException e) {
+                            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Error saving to player wallet file");
+                            e.printStackTrace();
+                        }
+
+                        player.sendMessage(ChatColor.YELLOW + "TXid: " + ChatColor.AQUA + tx.getTxId() + ChatColor.YELLOW + " has 1 confirmation");
+                        player.sendMessage(ChatColor.YELLOW + "Received: " + ChatColor.AQUA + tx.getValueSentToMe(wallet).toFriendlyString() + ChatColor.YELLOW + " from txid: " + ChatColor.AQUA + tx.getTxId());
+                    }
+                });
             }
         };
 
         r.runTaskAsynchronously(btccraft);
 
         //Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Finished restoring wallet and downloading blockchain");
-
-        wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
-            @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin coin, Coin coin1) {
-                player.sendMessage(ChatColor.YELLOW + "Transaction Alert! : " + ChatColor.RESET + "Your wallet received a transaction, waiting for confirmation, checking once a minute");
-
-                while(tx.getConfidence().getDepthInBlocks() < 1){
-                    player.sendMessage(ChatColor.YELLOW + "TXid: " + ChatColor.AQUA + tx.getTxId() + ChatColor.YELLOW + " still awaiting confirmation");
-
-                    try {
-                        TimeUnit.MINUTES.sleep(1);
-                    } catch (InterruptedException e) {
-                        Bukkit.getServer().getConsoleSender().sendMessage("Something exception");
-                        e.printStackTrace();
-                    }
-                }
-
-                try {
-                    wallet.saveToFile(playerWalletFile);
-                } catch (IOException e) {
-                    Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Error saving to player wallet file");
-                    e.printStackTrace();
-                }
-
-                player.sendMessage(ChatColor.YELLOW + "TXid: " + ChatColor.AQUA + tx.getTxId() + ChatColor.YELLOW + " has 1 confirmation");
-                player.sendMessage(ChatColor.YELLOW + "Received: " + ChatColor.AQUA + tx.getValueSentToMe(wallet).toFriendlyString() + ChatColor.YELLOW + " from txid: " + ChatColor.AQUA + tx.getTxId());
-            }
-        });
     }
 
     public BTCcraftWallet(NetworkParameters params, KeyChainGroup keyChainGroup, Address da, String mnemonicSeed, long ctime, long f, BTCcraft btccraft){
@@ -340,6 +349,7 @@ public class BTCcraftWallet extends Wallet {
         mnemonic = mnemonicSeed;
         creationTime = ctime;
         fee = f;
+        usable = false;
 
         final File adminWalletFile = new File(walletDirectory, "admin.wallet");
         /*try {
@@ -384,43 +394,42 @@ public class BTCcraftWallet extends Wallet {
                 peerGroup.startAsync();
                 peerGroup.downloadBlockChain();
 
+                usable = true;
+
                 Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + "Finished restoring admin wallet, you can now use BTCcraft commands");
+
+                wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
+                    @Override
+                    public void onCoinsReceived(Wallet wallet, Transaction tx, Coin coin, Coin coin1) {
+                        Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Admin wallet received transaction, waiting for confirmation, trying once a minute");
+
+                        while(tx.getConfidence().getDepthInBlocks() < 1){
+                            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "txid: " + ChatColor.AQUA + tx.getTxId() + ChatColor.RESET + " still awaiting confirmation");
+
+                            try {
+                                TimeUnit.MINUTES.sleep(1);
+                            } catch (InterruptedException e) {
+                                Bukkit.getServer().getConsoleSender().sendMessage("Something exception");
+                                e.printStackTrace();
+                            }
+                        }
+                        Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "txid: " + ChatColor.AQUA + tx.getTxId() + ChatColor.RESET + " has 1 confirmation");
+                        Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Received: " + tx.getValueSentToMe(wallet).toFriendlyString() + ChatColor.RESET + " from txid: " + ChatColor.AQUA + tx.getTxId());
+
+                        try {
+                            wallet.saveToFile(adminWalletFile);
+                        } catch (IOException e) {
+                            Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Error saving to admin wallet file");
+                            e.printStackTrace();
+                        }
+                    }
+                });
             }
         };
 
         r.runTaskAsynchronously(btccraft);
 
         //Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Finished restoring wallet and downloading blockchain");
-
-        wallet.addCoinsReceivedEventListener(new WalletCoinsReceivedEventListener() {
-            @Override
-            public void onCoinsReceived(Wallet wallet, Transaction tx, Coin coin, Coin coin1) {
-                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Admin wallet received transaction, waiting for confirmation, trying once a minute");
-
-                while(tx.getConfidence().getDepthInBlocks() < 1){
-                    Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "txid: " + ChatColor.AQUA + tx.getTxId() + ChatColor.RESET + " still awaiting confirmation");
-
-                    try {
-                        TimeUnit.MINUTES.sleep(1);
-                    } catch (InterruptedException e) {
-                        Bukkit.getServer().getConsoleSender().sendMessage("Something exception");
-                        e.printStackTrace();
-                    }
-                }
-                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "txid: " + ChatColor.AQUA + tx.getTxId() + ChatColor.RESET + " has 1 confirmation");
-                Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.YELLOW + "BTCCRAFT INFO: " + ChatColor.RESET + "Received: " + tx.getValueSentToMe(wallet).toFriendlyString() + ChatColor.RESET + " from txid: " + ChatColor.AQUA + tx.getTxId());
-
-                try {
-                    wallet.saveToFile(adminWalletFile);
-                } catch (IOException e) {
-                    Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Error saving to admin wallet file");
-                    e.printStackTrace();
-                }
-            }
-        });
-
-        //look into wallet.saveToFile and restoring that, that prob has all transactions of a wallet stored so we can get them on restarts/reloads/rejoins
-        //might need to step away from WalletAppKit and have a whole instance for each and every wallet?, have to look into RestoreFromSeed.java
     }
 
     public Address getDepositaddress() {
@@ -478,5 +487,9 @@ public class BTCcraftWallet extends Wallet {
             Bukkit.getServer().getConsoleSender().sendMessage(ChatColor.RED + "BTCCRAFT ERROR: " + ChatColor.RESET + "Error writing to player wallet file");
             e.printStackTrace();
         }
+    }
+
+    public boolean getUsable() {
+        return usable;
     }
 }
