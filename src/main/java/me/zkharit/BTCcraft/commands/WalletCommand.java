@@ -40,7 +40,7 @@ public class WalletCommand implements CommandExecutor {
             Address b = wallet.getSetaddress();
 
             player.sendMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "Address: " + ChatColor.YELLOW + a);
-            if(a.toString().equals(b.toString())){
+            if(!a.toString().equals(b.toString())){
                 player.sendMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "Set Address: " + ChatColor.YELLOW + b);
             }
             player.sendMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "Fee (sat/kb): " + ChatColor.YELLOW + wallet.getFee());

@@ -5,12 +5,8 @@ import me.zkharit.BTCcraft.events.EntityEvents;
 import me.zkharit.BTCcraft.events.ServerEvents;
 
 import org.bitcoinj.core.*;
-import org.bitcoinj.core.listeners.DownloadProgressTracker;
-import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.wallet.KeyChainGroup;
-import org.bitcoinj.wallet.Wallet;
-import org.bitcoinj.wallet.listeners.WalletCoinsReceivedEventListener;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -213,11 +209,11 @@ public class BTCcraft extends JavaPlugin{
                 getAdminWalletFromJSON();
 
                 for(Player player : Bukkit.getOnlinePlayers()){
+                    addToPlayerCache(player, player.getUniqueId());
                     BTCcraftWallet b = getPlayerWalletFromJSON(player);
                     if(b != null){
                         addToWalletCache(player, b);
                     }
-                    addToPlayerCache(player, player.getUniqueId());
                 }
             }
         }
