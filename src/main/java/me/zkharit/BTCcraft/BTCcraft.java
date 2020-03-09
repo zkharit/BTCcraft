@@ -231,6 +231,7 @@ public class BTCcraft extends JavaPlugin{
         this.getCommand("generateaddress").setExecutor(new GenerateAddressCommand(this));
         this.getCommand("getplayeraddress").setExecutor(new GetPlayerAddressCommand(this));
         this.getCommand("getmnemonic").setExecutor(new GetMnemonicCommand(this));
+        this.getCommand("btccrafthelp").setExecutor(new BtccraftHelpCommand());
 
         //send plugin instance into entity events, for using config information
         getServer().getPluginManager().registerEvents(new EntityEvents(this), this);
