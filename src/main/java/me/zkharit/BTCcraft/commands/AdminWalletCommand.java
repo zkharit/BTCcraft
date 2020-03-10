@@ -28,6 +28,12 @@ public class AdminWalletCommand implements CommandExecutor {
             //should never happen but here just in case
             return true;
         }
+
+        if(!adminWallet.getUsable()){
+            commandSender.sendMessage(ChatColor.YELLOW + "Please wait until your wallet is finished being restored, this can take up to 5 minutes");
+            return true;
+        }
+
         Address depositAddress = adminWallet.getDepositaddress();
 
         commandSender.sendMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "Address: " + ChatColor.YELLOW + depositAddress);

@@ -53,12 +53,8 @@ public class BTCcraft extends JavaPlugin{
     private File walletsDirectory = new File(getDataFolder().toString() + "/wallets");
 
     private NetworkParameters params = new TestNet3Params();
-    private String filePrefix = "wallet";
-    //private WalletAppKit kit;
 
     private BTCcraft btCcraft = this;
-
-    private boolean allowJoin = true;
 
     @Override
     @SuppressWarnings("unchecked")
@@ -411,8 +407,8 @@ public class BTCcraft extends JavaPlugin{
         return walletCache.get(player);
     }
 
-    public void addToWalletCache(Player player, BTCcraftWallet btCcraftWallet){
-        walletCache.put(player, btCcraftWallet);
+    public void addToWalletCache(Player player, BTCcraftWallet btcCraftWallet){
+        walletCache.put(player, btcCraftWallet);
     }
 
     public void removeFromWalletCache(Player player){
