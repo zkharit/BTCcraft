@@ -57,6 +57,10 @@ commands:
     description: "help command for btccraft"
     permission: btc.help
     usage: "/btccrafthelp"
+  adminwallet:
+    description: "view the information for the admin wallet"
+    permission: btc.admin
+    usage: "/adminwallet"
 permissions:
   btc.*:
     default: op
